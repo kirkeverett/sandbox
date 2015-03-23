@@ -15,6 +15,7 @@ module.exports = function() {
         gameRunning: User is playing a game
         gamePaused: Game is paused
         gameOver: Game is over
+
 */
 
     var DEFAULT_FPS = 10;
@@ -74,9 +75,7 @@ module.exports = function() {
 
         screen.resize();
 
-        var grid = screen.getScreenGridDim();
-
-        snake.setScreenDim(grid.numCols, grid.numRows, grid.cellSize);
+        snake.setScreenDim(screen.getScreenGridDim());
         restartGame();
     }
 

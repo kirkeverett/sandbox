@@ -1,0 +1,8 @@
+1) npm install
+2) npm install gulp -g
+    --  If you get error:  "Error: EACCES, mkdir '/usr/local/lib/node_modules/gulp'"
+    --    then run "sudo chown -R `whoami` /usr/local"
+3) gulp build
+    -- creates ./deploy
+4) gulp watch
+5) localhost:3000

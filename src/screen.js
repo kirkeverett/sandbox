@@ -48,13 +48,9 @@ module.exports = function(browserDetector, gameAreaHtmlID, statsAreaHtmlID, canv
 
     function getRandomCell() {
         return {
-            x : getRandomInt(0, htmlCanvas.width / cellSize),
-            y : getRandomInt(0, htmlCanvas.height / cellSize)
+            x : _.random(0, numCols-1),
+            y : _.random(0, numRows-1)
          }
-    }
-
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min)) + min;
     }
 
 

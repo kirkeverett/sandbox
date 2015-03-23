@@ -5,39 +5,33 @@ module.exports = function () {
 
     'use strict';
 
+    var INITIAL_SNAKE_LENGTH = 3;
     var DEFAULT_DIRECTION = 'up';
 
     var direction = DEFAULT_DIRECTION;
     var pendingDirection = DEFAULT_DIRECTION;
-    var INITIAL_LENGTH = 3;
-    var maxBlockY;
-    var maxBlockX;
-    var blockSize;
     var blocks = [];
+    var gridDim;
     var newBlockRequested = false;
 
     function reset() {
         direction = DEFAULT_DIRECTION;
         pendingDirection = DEFAULT_DIRECTION;
-        var blockY = Math.trunc(maxBlockY / 2);
-        var blockX = Math.trunc(maxBlockX / 2);
-        blocks = [];
-        for (var i = 0; i <= INITIAL_LENGTH; i++) {
-            blocks.push(Block(blockX, blockY));
-            blockY++;
-        }
+        var blockY = Math.trunc(gridDim.numRows / 2);
+        var blockX = Math.trunc(gridDim.numCols / 2);
+        blocks = _(INITIAL_SNAKE_LENGTH).times(function() {
+           return Block(blockX, blockY++);
+        });
     }
 
-    function setScreenDim(newGridWidth, newGridHeight, newBlockSize) {
-        maxBlockX = newGridWidth;
-        maxBlockY = newGridHeight;
-        blockSize = newBlockSize;
+    function setScreenDim(newGridDim) {
+        gridDim = newGridDim;
     }
 
     function draw(canvasCtx) {
-        for (var i = 0; i < blocks.length; i++) {
-            blocks[i].draw(canvasCtx, blockSize);
-        }
+        _.each(blocks, function(block) {
+            block.draw(canvasCtx, gridDim.cellSize);
+        });
     }
 
     function setDirection(newDirection) {
@@ -45,7 +39,7 @@ module.exports = function () {
         // Maker sure it's a legal direction. Can't backup over yourself.
         var allowableDirections = getAllowableDirections();
 
-        if (allowableDirections.indexOf(newDirection) !== -1) {
+        if(_.contains(allowableDirections, newDirection)) {
             pendingDirection = newDirection;
         }
     }
@@ -65,7 +59,6 @@ module.exports = function () {
       // do any of the snake blocks intersect the perimeter?
       var intersect = _.find(blocks, function(b) {
           if(b.x >= perimeter.minX && b.x <= perimeter.maxX && b.y >= perimeter.minY && b.y <= perimeter.maxY) {
-              console.log('Block: (' + block.x + ', ' + block.y + ') is too close to the snake block: (' + b.x + ', ' + b.y + ')');
               return true;
           }
       })
@@ -79,22 +72,22 @@ module.exports = function () {
 
         // pickup any direction changes
         if(direction !== pendingDirection) {
-       //     console.log("Changing to " + pendingDirection);
             direction = pendingDirection;
         }
 
         var newBlock;
         if(newBlockRequested) {
+           // when the snake eats the goal block it will get longer
            newBlock = Block();
            newBlockRequested=false;
         } else {
-            // get the end block (and remove it from the list)
+            // otherwise we'll move the tail to the new head location
             newBlock = blocks.pop();
         }
 
 
         // replace the xy of the new block to the current head
-        var head = blocks[0];
+        var head = _.first(blocks);
         newBlock.x = head.x;
         newBlock.y = head.y;
 
@@ -119,10 +112,10 @@ module.exports = function () {
     }
 
     function collisionDetected() {
-        var head = blocks[0];
+        var head = _.first(blocks);
 
         // fail the game if the lead block is off the game area
-        if(!head.withinBounds(0,0,maxBlockX, maxBlockY)) {
+        if(!head.withinBounds(0,0,gridDim.numCols, gridDim.numRows)) {
             return true;
         }
 
@@ -135,7 +128,8 @@ module.exports = function () {
     }
 
     function ateBlock(block) {
-        return blocks[0].samePosition(block);
+        // did we eat the goal block?
+        return _.first(blocks).samePosition(block);
     }
 
 
@@ -146,6 +140,7 @@ module.exports = function () {
 
     function getAllowableDirections() {
 
+        // The snake cannot backup over itself
         switch (direction) {
             case 'right':
             case 'left':
@@ -159,10 +154,8 @@ module.exports = function () {
 
     }
 
-  //  init();
 
     return {
-     //   init: init,
         reset:reset,
         draw: draw,
         advance: advance,
