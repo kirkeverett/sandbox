@@ -30,6 +30,9 @@ var SnakeGame = function () {
     var robotSnakeEnabled = false;
     var robotSnakeScoreThreshold = 5;  // release the robot snake when score exceeds this value.
     var browserDetect;
+    var aniFrameID;
+    var gameOverSound;
+    var ateBlockSound;
     var fontSizes = {
         large: 40,
         medium: 28,
@@ -48,6 +51,9 @@ var SnakeGame = function () {
 
         // load the previous high score from local storage if exists.
         highScore = loadNumberFromStorage(highScoreLocalStorageKey);
+
+        gameOverSound = new Audio("./media/pacman_death.wav");
+        ateBlockSound = new Audio("./media/pacman_wakka.wav");
 
         // Draw canvas for the first time.
         restartGame();
@@ -69,46 +75,39 @@ var SnakeGame = function () {
         // if we are getting ready to start a new game, then just draw once.
         switch (state) {
             case 'gameLoading':
-                drawGameBoard();
-                updateScoreDisplay();
-                drawStartGameMessage();
-                state = 'gameReady';
-                return;
-            case 'gameReady':
-                return;
-            case 'gameRunning':
-                // do nothing
+                doGameLoading();
                 break;
             case 'gamePaused':
-                return;
+            case 'gameReady':
+                break;
+            case 'gameRunning':
+                setTimeout(function () {
+                    aniFrameID = requestAnimationFrame(gameLoop);
+                    updateGameBoard();
+                }, 1000 / fps);
+                break;
             case 'gameOver':
-                updateScoreDisplay();
-                drawGameOverMessage();
-                highScore = Math.max(highScore, currentScore);
-                saveToStorage(highScoreLocalStorageKey, highScore);
-                return;
-
+                doGameOver();
+                break;
         }
+    }
 
-        setTimeout(function () {
-            requestAnimationFrame(gameLoop);
-            advanceSnakes();
-            if (checkCollision()) {
-                state = 'gameOver';
-            } else if (snake.ateBlock(goalBlock)) {
-                currentScore++;
-                updateScoreDisplay();
-                addBlockToSnakes();
-                robotSnakeEnabled = (currentScore >= robotSnakeScoreThreshold);
-                // speed up the game
-                fps++;
-                moveGoalBlock();
-                drawGameBoard(true);
-            } else {
-                drawGameBoard(true);
-            }
+    function doGameLoading() {
+        updateGameBoard(true);
+        updateScoreDisplay();
+        drawStartGameMessage();
+        state = 'gameReady';
+    }
 
-        }, 1000 / fps);
+
+    function doGameOver() {
+
+        gameOverSound.play();
+
+        updateScoreDisplay();
+        drawGameOverMessage();
+        highScore = Math.max(highScore, currentScore);
+        saveToStorage(highScoreLocalStorageKey, highScore);
     }
 
     function checkCollision() {
@@ -170,11 +169,31 @@ var SnakeGame = function () {
         $('#highScore').text(highScore);
     }
 
-    function drawGameBoard(drawGoalBlock) {
+    function updateGameBoard(init) {
+
+        if(!init) {
+            advanceSnakes();
+            if (checkCollision()) {
+                state = 'gameOver';
+                return;
+            } else if (snake.ateBlock(goalBlock)) {
+                ateBlockSound.play();
+                currentScore++;
+                updateScoreDisplay();
+                addBlockToSnakes();
+                robotSnakeEnabled = (currentScore >= robotSnakeScoreThreshold);
+                // speed up the game
+                fps++;
+                moveGoalBlock();
+            }
+
+        }
+
+
 
         clearCanvas();
 
-        if (drawGoalBlock) {
+        if (!init) {
             goalBlock.draw();
         }
         snake.draw();
