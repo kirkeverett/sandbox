@@ -76,10 +76,18 @@ var BrowserDetect = (function() {
         return fontScale;
     }
 
+    function supportsLocalStorage() {
+      return ('localStorage' in window && window['localStorage'] !== null);
+    }
+
+
     function matchesMediaQuery(query) {
         var mq = window.matchMedia(query);
         return  mq.matches;
     }
+
+
+
 
     // initialize it
     init();
@@ -91,7 +99,8 @@ var BrowserDetect = (function() {
         isLarge:isLarge,
         isMobile:isMobile,
         isTablet:isTablet,
-        getFontScale:getFontScale
+        getFontScale:getFontScale,
+        supportsLocalStorage:supportsLocalStorage
     };
 
     }

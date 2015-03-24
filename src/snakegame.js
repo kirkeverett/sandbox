@@ -19,6 +19,7 @@ var SnakeGame = function () {
 
     var DEFAULT_FPS = 10;
     var fps = DEFAULT_FPS;
+    var highScoreLocalStorageKey = 'snakegame.highscore';
 
     var snake;
     var goalBlock;
@@ -42,6 +43,11 @@ var SnakeGame = function () {
         // Restart the game if the screen size changes. Need to re-calc the grid
         window.addEventListener('resize', restartGame, false);
         window.addEventListener('orientationchange', restartGame, false);
+
+      //  saveToStorage(highScoreLocalStorageKey, 0);
+
+        // load the previous high score from local storage if exists.
+        highScore = loadNumberFromStorage(highScoreLocalStorageKey);
 
         // Draw canvas for the first time.
         restartGame();
@@ -77,6 +83,7 @@ var SnakeGame = function () {
                 updateScoreDisplay();
                 drawGameOverMessage();
                 highScore = Math.max(highScore, currentScore);
+                saveToStorage(highScoreLocalStorageKey, highScore);
                 return;
 
         }
@@ -292,6 +299,22 @@ var SnakeGame = function () {
         }
     }
 
+    function loadNumberFromStorage(key) {
+        var valNum = 0;
+        if(browserDetect.supportsLocalStorage()) {
+            var storageValue = localStorage.getItem(key);
+            if(storageValue) {
+                valNum = Number(storageValue);
+            }
+        }
+        return valNum;
+    }
+
+    function saveToStorage(key, value) {
+        if(browserDetect.supportsLocalStorage()) {
+            localStorage.setItem(key, value);
+        }
+    }
 
     var snakeGame = {
         init: init
