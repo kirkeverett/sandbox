@@ -7,6 +7,7 @@ var gulp = require('gulp'),
     less = require('gulp-less'),
     browserSync = require('browser-sync'),
     path=require('path'),
+    connect = require('gulp-connect'),
     concat = require('gulp-concat');
 
 
@@ -64,3 +65,10 @@ gulp.task('watch', ['build','serve'], function() {
 gulp.task('default', ['clean','build']);
 
 
+gulp.task('serveprod', ['build'], function() {
+    connect.server({
+        root: "./deploy",
+        port: process.env.PORT || 5000, // localhost:5000
+        livereload: false
+    });
+});
