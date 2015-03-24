@@ -32,7 +32,8 @@ gulp.task('html', function() {
 });
 
 gulp.task('css', function() {
-    return gulp.src(['./node_modules/bootstrap/dist/css/bootstrap.min.css', './css/styles.css'])
+   // return  gulp.src(['./node_modules/bootstrap/dist/css/bootstrap.min.css', './css/styles.css'])
+   return  gulp.src('./css/styles.css')
         .pipe(concat('combined.css'))
         .pipe(gulp.dest('./deploy/css'))
         .pipe(refresh(lrserver));

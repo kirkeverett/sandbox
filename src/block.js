@@ -1,21 +1,15 @@
-module.exports = function(xPos, yPos) {
-  'use strict';
+var Screen = require('./screen');
 
-    return {
+// A block represents one cell of the game grid
+var Block = function (xPos, yPos) {
+    'use strict';
+
+    var block = {
         x: xPos,
         y: yPos,
 
-        draw: function (canvasCtx, blockSize) {
-            canvasCtx.fillStyle = "#FF0000";  // Red
-            canvasCtx.fillRect(this.x * blockSize, this.y * blockSize,
-                blockSize, blockSize);
-
-            canvasCtx.beginPath(); //
-            canvasCtx.fillStyle = "#000000";
-            canvasCtx.rect(this.x * blockSize, this.y * blockSize,
-                blockSize, blockSize);
-            canvasCtx.stroke();
-
+        draw: function () {
+            this.drawCell(this.x, this.y);
         },
         move: function (direction) {
 
@@ -27,18 +21,26 @@ module.exports = function(xPos, yPos) {
                     this.x--;
                     break;
                 case 'down':
-                    this.y++
+                    this.y++;
                     break;
                 case 'up':
                     this.y--;
                     break;
             }
         },
-        samePosition: function(block) {
+        samePosition: function (block) {
             return this.x === block.x && this.y === block.y;
         },
-        withinBounds : function(minX, minY, maxX, maxY) {
+        withinBounds: function (minX, minY, maxX, maxY) {
             return (this.x >= minX && this.y >= minY && this.x < maxX && this.y < maxY);
         }
-    }
+    };
+
+    // "extend" with the screen closure methods
+    _.extend(block.constructor.prototype, Screen.getInstance());
+
+    return block;
+
 };
+
+module.exports = Block;

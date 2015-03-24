@@ -1,7 +1,9 @@
-
 var Block = require('./block');
+var Screen = require('./screen');
 
-module.exports = function () {
+// The snake is essentially a collection of Blocks. It can be advanced
+//  around the screen one block at a time.
+var Snake = function () {
 
     'use strict';
 
@@ -11,26 +13,21 @@ module.exports = function () {
     var direction = DEFAULT_DIRECTION;
     var pendingDirection = DEFAULT_DIRECTION;
     var blocks = [];
-    var gridDim;
     var newBlockRequested = false;
 
     function reset() {
         direction = DEFAULT_DIRECTION;
         pendingDirection = DEFAULT_DIRECTION;
-        var blockY = Math.trunc(gridDim.numRows / 2);
-        var blockX = Math.trunc(gridDim.numCols / 2);
-        blocks = _(INITIAL_SNAKE_LENGTH).times(function() {
-           return Block(blockX, blockY++);
+        var blockY = Math.trunc(getScreenGridDim().numRows / 2);
+        var blockX = Math.trunc(getScreenGridDim().numCols / 2);
+        blocks = _(INITIAL_SNAKE_LENGTH).times(function () {
+            return Block(blockX, blockY++);
         });
     }
 
-    function setScreenDim(newGridDim) {
-        gridDim = newGridDim;
-    }
-
-    function draw(canvasCtx) {
-        _.each(blocks, function(block) {
-            block.draw(canvasCtx, gridDim.cellSize);
+    function draw() {
+        _.each(blocks, function (block) {
+            block.draw();
         });
     }
 
@@ -39,7 +36,7 @@ module.exports = function () {
         // Maker sure it's a legal direction. Can't backup over yourself.
         var allowableDirections = getAllowableDirections();
 
-        if(_.contains(allowableDirections, newDirection)) {
+        if (_.contains(allowableDirections, newDirection)) {
             pendingDirection = newDirection;
         }
     }
@@ -48,22 +45,20 @@ module.exports = function () {
 
         minSafeDistance = minSafeDistance || 5;
 
-       // calc a perimeter around the block
-       var perimeter = {
-          minX : (block.x - minSafeDistance),
-          maxX : (block.x + minSafeDistance),
-          minY : (block.y - minSafeDistance),
-          maxY : (block.y + minSafeDistance)
-       }
+        // calc a perimeter around the block
+        var perimeter = {
+            minX: (block.x - minSafeDistance),
+            maxX: (block.x + minSafeDistance),
+            minY: (block.y - minSafeDistance),
+            maxY: (block.y + minSafeDistance)
+        };
 
-      // do any of the snake blocks intersect the perimeter?
-      var intersect = _.find(blocks, function(b) {
-          if(b.x >= perimeter.minX && b.x <= perimeter.maxX && b.y >= perimeter.minY && b.y <= perimeter.maxY) {
-              return true;
-          }
-      })
-
-      return intersect;
+        // do any of the snake blocks intersect the perimeter?
+        return _.find(blocks, function (b) {
+            if (b.x >= perimeter.minX && b.x <= perimeter.maxX && b.y >= perimeter.minY && b.y <= perimeter.maxY) {
+                return true;
+            }
+        })
     }
 
     function advance() {
@@ -71,15 +66,15 @@ module.exports = function () {
         //  of the next location.
 
         // pickup any direction changes
-        if(direction !== pendingDirection) {
+        if (direction !== pendingDirection) {
             direction = pendingDirection;
         }
 
         var newBlock;
-        if(newBlockRequested) {
-           // when the snake eats the goal block it will get longer
-           newBlock = Block();
-           newBlockRequested=false;
+        if (newBlockRequested) {
+            // when the snake eats the goal block it will get longer
+            newBlock = Block();
+            newBlockRequested = false;
         } else {
             // otherwise we'll move the tail to the new head location
             newBlock = blocks.pop();
@@ -115,13 +110,14 @@ module.exports = function () {
         var head = _.first(blocks);
 
         // fail the game if the lead block is off the game area
-        if(!head.withinBounds(0,0,gridDim.numCols, gridDim.numRows)) {
+        var dim = getScreenGridDim();
+        if (!head.withinBounds(0, 0, dim.numCols, dim.numRows)) {
             return true;
         }
 
         // fail if the snake runs into itself
         for (var i = 1; i < blocks.length; i++) {
-            if(head.samePosition(blocks[i])) {
+            if (head.samePosition(blocks[i])) {
                 return true;
             }
         }
@@ -154,20 +150,26 @@ module.exports = function () {
 
     }
 
-
-    return {
-        reset:reset,
+    var snake = {
+        reset: reset,
         draw: draw,
         advance: advance,
         setDirection: setDirection,
-        setScreenDim: setScreenDim,
         collisionDetected: collisionDetected,
-        ateBlock:ateBlock,
-        addBlock:addBlock,
-        isTooClose:isTooClose
+        ateBlock: ateBlock,
+        addBlock: addBlock,
+        isTooClose: isTooClose
     };
+
+    // "extend" with the screen closure methods
+    _.extend(snake.constructor.prototype, Screen.getInstance());
+
+    return snake;
+
 };
 
+
+module.exports = Snake;
 
 
 

@@ -61,12 +61,12 @@ html, body {
     margin: 0 auto;
 }
 
-div#one {
+div#score1 {
     width: 50%;
     float: left;
     text-align: center;
 }
-div#two {
+div#score2 {
     margin-left: 50%;
     text-align: center;
 }

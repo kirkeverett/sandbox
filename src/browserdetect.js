@@ -1,6 +1,14 @@
-module.exports = function(mediumStartWidthPx, largeStartWidthPx) {
+
+// The browser detect singleton keeps track of what type of device
+//  and screen size we're on. We use this to select a proper font
+// size and display the correct messages to the user (i.e. use "tap" instead of "click")
+var BrowserDetect = (function() {
 
     'use strict';
+
+    var instance;
+
+    function createInstance() {
 
     var small = false;
     var medium = false;
@@ -9,12 +17,20 @@ module.exports = function(mediumStartWidthPx, largeStartWidthPx) {
     var tablet = false;
     var touchDevice = false;
     var fontScale;
+    var mediumStartWidthPx = 600;
+    var largeStartWidthPx =  960;
+
+
+    function init() {
+        window.addEventListener('resize', update, false);
+        window.addEventListener('orientationchange', update, false);
+
+        update();
+    }
+
+
 
     function update() {
-
-        // Set some sensible defaults
-        mediumStartWidthPx = mediumStartWidthPx || 600;
-        largeStartWidthPx = largeStartWidthPx || 960;
 
         touchDevice = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
         small = matchesMediaQuery('all and (max-width: ' + (mediumStartWidthPx-1) + 'px)');
@@ -66,7 +82,7 @@ module.exports = function(mediumStartWidthPx, largeStartWidthPx) {
     }
 
     // initialize it
-    update();
+    init();
 
     return {
         update:update,
@@ -78,4 +94,16 @@ module.exports = function(mediumStartWidthPx, largeStartWidthPx) {
         getFontScale:getFontScale
     };
 
-};
+    }
+
+    return {
+        getInstance: function () {
+            if(!instance) {
+                instance = createInstance();
+            }
+            return instance;
+        }
+    };
+})();
+
+module.exports = BrowserDetect;

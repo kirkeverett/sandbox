@@ -1,9 +1,5 @@
 
-// TODO: Animation is choppy in Firefox
-// TODO: inheritence and _extends(...)
-// TODO: run jshint
-// TODO: Add a dificulty level (high = auto-pilot snake)
-
+// Main entry point of the game.
 (function() {
     'use strict';
 
@@ -14,7 +10,6 @@ if (!('jQuery' in window)) {
 if (!('_' in window)) {
   window._ = require('underscore');
 }
-
 
 var SnakeGame = require('./snakegame');
 
