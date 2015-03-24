@@ -112,10 +112,6 @@ var Screen = (function () {
         // default draw method
         var drawCell = function (x, y, fillColor, borderColor) {
 
-            fillColor = fillColor || '#FF0000';
-            borderColor = borderColor || '#000000';
-
-
             ctx.fillStyle = fillColor || '#FF0000';  // Red
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 

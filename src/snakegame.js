@@ -22,10 +22,13 @@ var SnakeGame = function () {
     var highScoreLocalStorageKey = 'snakegame.highscore';
 
     var snake;
+    var robotSnake;
     var goalBlock;
     var state = 'gameLoading';
     var currentScore = 0;
     var highScore = 0;
+    var robotSnakeEnabled = false;
+    var robotSnakeScoreThreshold = 5;  // release the robot snake when score exceeds this value.
     var browserDetect;
     var fontSizes = {
         large: 40,
@@ -37,6 +40,7 @@ var SnakeGame = function () {
 
         browserDetect = BrowserDetect.getInstance();
         snake = Snake();
+        robotSnake = Snake(true);
 
         // Restart the game if the screen size changes. Need to re-calc the grid
         window.addEventListener('resize', restartGame, false);
@@ -55,6 +59,8 @@ var SnakeGame = function () {
         fps = DEFAULT_FPS;
         moveGoalBlock();
         snake.reset();
+        robotSnakeEnabled = false;
+        robotSnake.reset();
         gameLoop();
     }
 
@@ -86,13 +92,14 @@ var SnakeGame = function () {
 
         setTimeout(function () {
             requestAnimationFrame(gameLoop);
-            snake.advance();
-            if (snake.collisionDetected()) {
+            advanceSnakes();
+            if (checkCollision()) {
                 state = 'gameOver';
             } else if (snake.ateBlock(goalBlock)) {
                 currentScore++;
                 updateScoreDisplay();
-                snake.addBlock();
+                addBlockToSnakes();
+                robotSnakeEnabled = (currentScore >= robotSnakeScoreThreshold);
                 // speed up the game
                 fps++;
                 moveGoalBlock();
@@ -104,11 +111,43 @@ var SnakeGame = function () {
         }, 1000 / fps);
     }
 
+    function checkCollision() {
+        // Check to see if the head of either snake overlaps
+        // any of the robot snake pieces.
+        if(robotSnakeEnabled &&
+               (robotSnake.intersects(snake.getHead()) ||
+                snake.intersects(robotSnake.getHead()))) {
+            return true;
+        }
+
+        return snake.collisionDetected();
+    }
+
+
+
+    function addBlockToSnakes() {
+        snake.addBlock();
+
+        if(robotSnakeEnabled) {
+           robotSnake.addBlock();
+        }
+    }
+
+    function advanceSnakes() {
+        snake.advance();
+
+        if (robotSnakeEnabled) {
+          robotSnake.advance();
+        }
+
+    }
+
+
     function moveGoalBlock() {
 
         // Create the goal block
         if (!goalBlock) {
-            goalBlock = Block();
+            goalBlock = Block(0,0,'#4CBB17');
         }
 
         // Find a new space for the goal block that is not too close to the snake
@@ -139,6 +178,10 @@ var SnakeGame = function () {
             goalBlock.draw();
         }
         snake.draw();
+
+        if(robotSnakeEnabled) {
+          robotSnake.draw();
+        }
     }
 
 
@@ -153,9 +196,14 @@ var SnakeGame = function () {
             centerTextOnCanvas(msg, fontSizes.large);
         }
 
+        var yOffset = 40;  // put this text under the above text
         if (!browserDetect.isMobile() && !browserDetect.isTablet()) {
-            centerTextOnCanvas("Press the Space Bar to pause.", fontSizes.large, 60);
+            centerTextOnCanvas("Press the Space Bar to pause.", fontSizes.medium, yOffset);
+            yOffset+=25;
         }
+
+        centerTextOnCanvas("(Watch out for red robot snakes!)", fontSizes.small, yOffset);
+
     }
 
 
@@ -174,6 +222,7 @@ var SnakeGame = function () {
             msg = "Press the space bar or click on the game to restart";
         }
         centerTextOnCanvas(msg, fontSizes.medium, 40);
+
     }
 
     // clicking on the game board restarts the game

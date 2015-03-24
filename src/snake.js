@@ -3,170 +3,310 @@ var Screen = require('./screen');
 
 // The snake is essentially a collection of Blocks. It can be advanced
 //  around the screen one block at a time.
-var Snake = function () {
+var Snake = function (robot) {
 
-    'use strict';
+        'use strict';
 
-    var INITIAL_SNAKE_LENGTH = 3;
-    var DEFAULT_DIRECTION = 'up';
+        var INITIAL_SNAKE_LENGTH = 3;
+        var DEFAULT_DIRECTION = 'left';
 
-    var direction = DEFAULT_DIRECTION;
-    var pendingDirection = DEFAULT_DIRECTION;
-    var blocks = [];
-    var newBlockRequested = false;
+        var direction = DEFAULT_DIRECTION;
+        var pendingDirection = DEFAULT_DIRECTION;
+        var blocks = [];
+        var newBlockRequested = false;
+        var robotMode = robot;
+        var robotTurnInterval = _.random(2, 6);
 
-    function reset() {
-        direction = DEFAULT_DIRECTION;
-        pendingDirection = DEFAULT_DIRECTION;
-        var blockY = Math.trunc(getScreenGridDim().numRows / 2);
-        var blockX = Math.trunc(getScreenGridDim().numCols / 2);
-        blocks = _(INITIAL_SNAKE_LENGTH).times(function () {
-            return Block(blockX, blockY++);
-        });
-    }
-
-    function draw() {
-        _.each(blocks, function (block) {
-            block.draw();
-        });
-    }
-
-    function setDirection(newDirection) {
-
-        // Maker sure it's a legal direction. Can't backup over yourself.
-        var allowableDirections = getAllowableDirections();
-
-        if (_.contains(allowableDirections, newDirection)) {
-            pendingDirection = newDirection;
+        function reset() {
+            direction = DEFAULT_DIRECTION;
+            pendingDirection = DEFAULT_DIRECTION;
+            var blockY = Math.trunc(getScreenGridDim().numRows / 2);
+            var blockX = Math.trunc(getScreenGridDim().numCols / 2);
+            var blockColor = getBlockColor();
+            blocks = _(INITIAL_SNAKE_LENGTH).times(function () {
+                return Block(blockX, blockY++, blockColor);
+            });
         }
-    }
 
-    function isTooClose(block, minSafeDistance) {
+        function getBlockColor() {
+            return (robotMode && '#FF0000') || '#FFFF00';
+        }
 
-        minSafeDistance = minSafeDistance || 5;
 
-        // calc a perimeter around the block
-        var perimeter = {
-            minX: (block.x - minSafeDistance),
-            maxX: (block.x + minSafeDistance),
-            minY: (block.y - minSafeDistance),
-            maxY: (block.y + minSafeDistance)
+        function draw() {
+            _.each(blocks, function (block) {
+                block.draw();
+            });
+        }
+
+        function setDirection(newDirection) {
+
+            // Maker sure it's a legal direction. Can't backup over yourself.
+            var allowableDirections = getAllowableDirections();
+
+            if (_.contains(allowableDirections, newDirection)) {
+                pendingDirection = newDirection;
+            }
+        }
+
+        function isTooClose(block, minSafeDistance) {
+
+            minSafeDistance = minSafeDistance || 5;
+
+            // calc a perimeter around the block
+            var perimeter = {
+                minX: (block.x - minSafeDistance),
+                maxX: (block.x + minSafeDistance),
+                minY: (block.y - minSafeDistance),
+                maxY: (block.y + minSafeDistance)
+            };
+
+            // do any of the snake blocks intersect the perimeter?
+            return _.find(blocks, function (b) {
+                if (b.x >= perimeter.minX && b.x <= perimeter.maxX && b.y >= perimeter.minY && b.y <= perimeter.maxY) {
+                    return true;
+                }
+            })
+        }
+
+        function advance() {
+            // put the end block at the start of the list with the coords
+            //  of the next location.
+
+            // randomly turn the robot snake every x advances.
+            if (robotMode && (isOnPerimeter() || (--robotTurnInterval === 0))) {
+                pendingDirection = getRandomNewDirection();
+                robotTurnInterval = _.random(5, 10);
+            }
+
+            // pickup any direction changes
+            if (direction !== pendingDirection) {
+                direction = pendingDirection;
+            }
+
+            var newBlock;
+            if (newBlockRequested) {
+                // when the snake eats the goal block it will get longer
+                newBlock = Block(0, 0, getBlockColor());
+                newBlockRequested = false;
+            } else {
+                // otherwise we'll move the tail to the new head location
+                newBlock = blocks.pop();
+            }
+
+
+            // replace the xy of the new block to the current head
+            var head = _.first(blocks);
+            newBlock.x = head.x;
+            newBlock.y = head.y;
+
+            switch (direction) {
+                case 'right':
+                    newBlock.x++;
+                    break;
+                case 'left':
+                    newBlock.x--;
+                    break;
+                case 'down':
+                    newBlock.y++;
+                    break;
+                case 'up':
+                    newBlock.y--;
+                    break;
+            }
+
+
+            // insert the block to the front of the list
+            blocks.unshift(newBlock);
+        }
+
+        function isOnPerimeter() {
+            var head = _.first(blocks);
+            var dim = getScreenGridDim();
+            return (head.x === 0 || head.y === 0 || head.x === dim.numCols - 1 || head.y === dim.numRows - 1);
+        }
+
+        function collisionDetected() {
+            var head = _.first(blocks);
+
+            // fail the game if the lead block is off the game area
+            var dim = getScreenGridDim();
+            if (!head.withinBounds(0, 0, dim.numCols, dim.numRows)) {
+                return true;
+            }
+
+            // fail if the snake runs into itself
+            for (var i = 1; i < blocks.length; i++) {
+                if (head.samePosition(blocks[i])) {
+                    return true;
+                }
+            }
+        }
+
+        function ateBlock(block) {
+            // did we eat the goal block?
+            return _.first(blocks).samePosition(block);
+        }
+
+
+        function addBlock() {
+            newBlockRequested = true;
+        }
+
+        function getRandomNewDirection() {
+            var dirs = getAllowableDirections();
+            return dirs[_.random(0, dirs.length - 1)];
+        }
+
+        function getAllowableDirections() {
+
+            if (robotMode) {
+                // We need to force turn the snake when it gets on the perimeter
+                var possibleDirs = getSnakeForceTurnDirections();
+
+                if (possibleDirs) {
+                    return possibleDirs;
+                }
+
+            }
+
+            // The snake cannot backup over itself
+            switch (direction) {
+                case 'right':
+                case 'left':
+                    return ['up', 'down'];
+                    break;
+                case 'down':
+                case 'up':
+                    return ['left', 'right'];
+                    break;
+            }
+        }
+
+        function getSnakeForceTurnDirections() {
+            // make sure our robot snake doesn't go off the board.
+            var head = _.first(blocks);
+
+            if (head.isAtTopLeft()) {
+                // upper left corner
+                switch (direction) {
+                    case 'left':
+                        return ['down'];
+                        break;
+                    case 'up':
+                        return ['right'];
+                        break;
+                }
+            } else if (head.isAtLowerLeft()) {
+                // lower left corner
+                switch (direction) {
+                    case 'left':
+                        return ['up'];
+                        break;
+                    case 'down':
+                        return ['right'];
+                        break;
+                }
+            } else if (head.isAtUpperRight()) {
+                // upper right corner
+                switch (direction) {
+                    case 'right':
+                        return ['down'];
+                        break;
+                    case 'up':
+                        return ['left'];
+                        break;
+                }
+            } else if (head.isAtLowerRight()) {
+                // lower right corner
+                switch (direction) {
+                    case 'right':
+                        return ['up'];
+                        break;
+                    case 'down':
+                        return ['left'];
+                        break;
+                }
+            } else if (head.onLeftWall()) {
+                // somewhere on the left wall
+                switch (direction) {
+                    case 'up':
+                    case 'down':
+                        return ['right'];
+                        break;
+                    case 'left':
+                        return ['up', 'down'];
+                        break;
+                }
+            } else if (head.onTopWall()) {
+                // somewhere on the top wall
+                switch (direction) {
+                    case 'left':
+                    case 'right':
+                        return ['down'];
+                        break;
+                    case 'up':
+                        return ['right', 'left'];
+                        break;
+                }
+            } else if (head.onBottomWall()) {
+                // somewhere on the bottom wall
+                switch (direction) {
+                    case 'left':
+                    case 'right':
+                        return ['up'];
+                        break;
+                    case 'down':
+                        return ['right', 'left'];
+                        break;
+                }
+            } else if (head.onRightWall()) {
+                // somewhere on the right wall
+                switch (direction) {
+                    case 'up':
+                    case 'down':
+                        return ['left'];
+                        break;
+                    case 'right':
+                        return ['up', 'down'];
+                        break;
+                }
+            }
+        }
+
+
+        function getHead() {
+            return _.first(blocks);
+        }
+
+        function intersects(block) {
+            // does the specified block occupy the same position of any snake blocks
+            return _.find(blocks, function (b) {
+                return b.samePosition(block);
+            })
+        }
+
+
+        var snake = {
+            reset: reset,
+            draw: draw,
+            advance: advance,
+            setDirection: setDirection,
+            collisionDetected: collisionDetected,
+            ateBlock: ateBlock,
+            addBlock: addBlock,
+            isTooClose: isTooClose,
+            getHead: getHead,
+            intersects: intersects
         };
 
-        // do any of the snake blocks intersect the perimeter?
-        return _.find(blocks, function (b) {
-            if (b.x >= perimeter.minX && b.x <= perimeter.maxX && b.y >= perimeter.minY && b.y <= perimeter.maxY) {
-                return true;
-            }
-        })
-    }
+// "extend" with the screen closure methods
+        _.extend(snake.constructor.prototype, Screen.getInstance());
 
-    function advance() {
-        // put the end block at the start of the list with the coords
-        //  of the next location.
-
-        // pickup any direction changes
-        if (direction !== pendingDirection) {
-            direction = pendingDirection;
-        }
-
-        var newBlock;
-        if (newBlockRequested) {
-            // when the snake eats the goal block it will get longer
-            newBlock = Block();
-            newBlockRequested = false;
-        } else {
-            // otherwise we'll move the tail to the new head location
-            newBlock = blocks.pop();
-        }
-
-
-        // replace the xy of the new block to the current head
-        var head = _.first(blocks);
-        newBlock.x = head.x;
-        newBlock.y = head.y;
-
-        switch (direction) {
-            case 'right':
-                newBlock.x++;
-                break;
-            case 'left':
-                newBlock.x--;
-                break;
-            case 'down':
-                newBlock.y++;
-                break;
-            case 'up':
-                newBlock.y--;
-                break;
-        }
-
-
-        // insert the block to the front of the list
-        blocks.unshift(newBlock);
-    }
-
-    function collisionDetected() {
-        var head = _.first(blocks);
-
-        // fail the game if the lead block is off the game area
-        var dim = getScreenGridDim();
-        if (!head.withinBounds(0, 0, dim.numCols, dim.numRows)) {
-            return true;
-        }
-
-        // fail if the snake runs into itself
-        for (var i = 1; i < blocks.length; i++) {
-            if (head.samePosition(blocks[i])) {
-                return true;
-            }
-        }
-    }
-
-    function ateBlock(block) {
-        // did we eat the goal block?
-        return _.first(blocks).samePosition(block);
-    }
-
-
-    function addBlock() {
-        newBlockRequested = true;
-    }
-
-
-    function getAllowableDirections() {
-
-        // The snake cannot backup over itself
-        switch (direction) {
-            case 'right':
-            case 'left':
-                return ['up', 'down'];
-                break;
-            case 'down':
-            case 'up':
-                return ['left', 'right'];
-                break;
-        }
+        return snake;
 
     }
-
-    var snake = {
-        reset: reset,
-        draw: draw,
-        advance: advance,
-        setDirection: setDirection,
-        collisionDetected: collisionDetected,
-        ateBlock: ateBlock,
-        addBlock: addBlock,
-        isTooClose: isTooClose
-    };
-
-    // "extend" with the screen closure methods
-    _.extend(snake.constructor.prototype, Screen.getInstance());
-
-    return snake;
-
-};
+    ;
 
 
 module.exports = Snake;
