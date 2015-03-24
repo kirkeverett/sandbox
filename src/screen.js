@@ -51,10 +51,14 @@ var Screen = (function () {
             }
         }
 
-        function getRandomCell() {
+        function getRandomCell(excludePerimeter) {
+
+            // if excludePerimeter, then don't pick a cell on the border of the game
+            var offset = excludePerimeter ? 1 : 0;
+
             return {
-                x: _.random(0, numCols - 1),
-                y: _.random(0, numRows - 1)
+               x: _.random(offset, (numCols - 1 - offset)),
+               y: _.random(offset, (numRows - 1 - offset))
             }
         }
 

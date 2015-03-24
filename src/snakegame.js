@@ -27,8 +27,6 @@ var SnakeGame = function () {
     var currentScore = 0;
     var highScore = 0;
     var browserDetect;
-    var screen;
-
     var fontSizes = {
         large: 40,
         medium: 28,
@@ -43,8 +41,6 @@ var SnakeGame = function () {
         // Restart the game if the screen size changes. Need to re-calc the grid
         window.addEventListener('resize', restartGame, false);
         window.addEventListener('orientationchange', restartGame, false);
-
-      //  saveToStorage(highScoreLocalStorageKey, 0);
 
         // load the previous high score from local storage if exists.
         highScore = loadNumberFromStorage(highScoreLocalStorageKey);
@@ -125,7 +121,7 @@ var SnakeGame = function () {
 
     function setRandomBlockLocation(block) {
 
-        var loc = getRandomCell();
+        var loc = getRandomCell(true);
         block.x = loc.x;
         block.y = loc.y;
     }
