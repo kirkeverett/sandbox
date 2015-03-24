@@ -4,15 +4,14 @@ var gulp = require('gulp'),
     lrserver = require('tiny-lr')(),
     del = require('del'),
     source = require('vinyl-source-stream'),
-    less = require('gulp-less'),
     browserSync = require('browser-sync'),
-    path=require('path'),
     connect = require('gulp-connect'),
-    concat = require('gulp-concat');
-
+    concat = require('gulp-concat'),
+    spritesmith = require("gulp.spritesmith");
 
 gulp.task('clean', function () {
     del(['deploy/**']);
+    del(['built/**']);
 });
 
 
@@ -38,13 +37,26 @@ gulp.task('media', function() {
         .pipe(refresh(lrserver));
 });
 
-gulp.task('css', function() {
-   // return  gulp.src(['./node_modules/bootstrap/dist/css/bootstrap.min.css', './css/styles.css'])
-   return  gulp.src('./css/styles.css')
+gulp.task('css', ['sprite'], function() {
+   return  gulp.src(['./node_modules/bootstrap/dist/css/bootstrap.min.css',  './built/css/sprite.css', './css/styles.css'])
         .pipe(concat('combined.css'))
         .pipe(gulp.dest('./deploy/css'))
         .pipe(refresh(lrserver));
 });
+
+gulp.task('sprite', function() {
+    var spriteData =
+        gulp.src('./src/img/sprite/*.*') // source path of the sprite images
+            .pipe(spritesmith({
+                imgName: 'sprite.png',
+                cssName: 'sprite.css'
+            }));
+
+    spriteData.img.pipe(gulp.dest('./deploy/css/')); // output path for the sprite
+   return spriteData.css.pipe(gulp.dest('./built/css/')); // output path for the CSS
+});
+
+
 
 gulp.task('build', function() {
     gulp.run('css', 'html', 'scripts','media');
@@ -58,7 +70,10 @@ gulp.task('serve',  function() {
 
     gulp.watch("deploy/*.html").on('change',  browserSync.reload);
     gulp.watch("deploy/*.js").on('change',  browserSync.reload);
-    gulp.watch("deploy/*.css").on('change',  browserSync.reload);
+    gulp.watch("deploy/css/*.css").on('change',  browserSync.reload);
+    gulp.watch("deploy/src/img/*.png").on('change',  browserSync.reload);
+    gulp.watch("deploy/media/*.wav").on('change',  browserSync.reload);
+
 });
 
 
@@ -67,6 +82,7 @@ gulp.task('watch', ['build','serve'], function() {
     gulp.watch('src/*.html', ['html']);
     gulp.watch('css/*.css', ['css']);
     gulp.watch('media/*.wav', ['media']);
+    gulp.watch('src/img/*.png', ['sprite']);
 });
 
 gulp.task('default', ['clean','build']);

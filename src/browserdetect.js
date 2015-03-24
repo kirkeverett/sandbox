@@ -35,13 +35,19 @@ var BrowserDetect = (function() {
         touchDevice = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
         small = matchesMediaQuery('all and (max-width: ' + (mediumStartWidthPx-1) + 'px)');
         medium = matchesMediaQuery('all and (max-width: ' + (largeStartWidthPx-1) + 'px) and (min-width: ' + mediumStartWidthPx + 'px)');
+        large = !small && !medium;
         mobile = touchDevice && small;
-        tablet = touchDevice && medium;
+        tablet = touchDevice && (medium || large);
+
+       // alert("small: " + small + ", medium: " + medium + ", large: " + large + ", mobile: "+ mobile + ", tablet: " + tablet);
 
 
         if(mobile) {
             fontScale = .6;
-        } else if(!touchDevice) {
+        } else if(tablet) {
+            fontScale = 1;
+        }
+        else if(!touchDevice) {
             if(medium) {
                 fontScale = .7;
             } else if(small) {

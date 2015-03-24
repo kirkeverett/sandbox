@@ -71,4 +71,25 @@ div#score2 {
     text-align: center;
 }
 
+#fullScreenToggle {
+    margin-top: 5px;
+    float: right;
+
+}
+
+
+@media all and (max-width: 700px) {
+    #fullScreenToggle {
+       display:none;
+    }
+}
+
+/* ipad exclusion */
+@media only screen and (min-device-width : 768px) and (max-device-width : 1024px)  {
+    #fullScreenToggle {
+        display:none;
+    }
+
+}
+
 

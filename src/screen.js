@@ -14,7 +14,6 @@ var Screen = (function () {
         var gameArea = $('#gameArea');
         var statsArea = $('#statsArea');
         var htmlCanvas = $('#gameCanvas').get(0);
-
         var fontFamily = "Sans-Serif";
         var textColor = '#473070';
 
@@ -132,6 +131,46 @@ var Screen = (function () {
             ctx.stroke();
         }
 
+
+        // pressing the "full screen" button toggles full screen mode
+        $('#fullScreenToggle').click(function () {
+            if (toggleFullScreen()) {
+                $('#fullScreenToggle').text('Exit Full-Screen');
+            } else {
+                $('#fullScreenToggle').text('Full-Screen');
+            }
+        });
+
+
+        function toggleFullScreen() {
+            // Support is sketchy right now so...
+            if (!document.fullscreenElement &&
+                !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+                return true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                return false;
+            }
+        }
+
+
         // initialize the object
         init();
 
@@ -143,7 +182,8 @@ var Screen = (function () {
             centerTextOnCanvas: centerTextOnCanvas,
             drawCenteredText: drawCenteredText,
             drawCell: drawCell,
-            clearCanvas: clearCanvas
+            clearCanvas: clearCanvas,
+            toggleFullScreen:toggleFullScreen
         };
 
     }
