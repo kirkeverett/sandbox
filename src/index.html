@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Snake Game</title>
     <link href="css/combined.css" rel="stylesheet">
- </head>
+</head>
 <body>
 
 <div id="full">
@@ -15,7 +15,6 @@
             <div id="score2">High Score: <span id="highScore"></span>
                 <button id="fullScreenToggle" type="button" class="btn btn-default">Full-Screen</button>
              </div>
-
         </div>
     </div>
     <div id="gameArea">
@@ -25,7 +24,16 @@
     </div>
 </div>
 
+<div id="preload">
+    <img src="css/sprite.png" width="1" height="1" />
+</div>
 
 <script src="bundle.js" type="text/javascript"></script>
+<script>
+    $( document ).ready(function() {
+        SNAKEGAME.init();
+    });
+</script>
+
 </body>
 </html>

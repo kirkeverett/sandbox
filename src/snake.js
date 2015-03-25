@@ -3,42 +3,40 @@ var Screen = require('./screen');
 
 // The snake is essentially a collection of Blocks. It can be advanced
 //  around the screen one block at a time.
-var Snake = function (robot) {
+var Snake = function (blockColor, robot) {
 
         'use strict';
 
         var INITIAL_SNAKE_LENGTH = 3;
-        var DEFAULT_DIRECTION = 'left';
+        var DEFAULT_DIRECTION = 'up';
 
         var direction = DEFAULT_DIRECTION;
         var pendingDirection = DEFAULT_DIRECTION;
         var blocks = [];
         var newBlockRequested = false;
-        var robotMode = robot;
-        var robotTurnInterval = _.random(2, 6);
+        var robotMode = robot;  // is this a robot snake (randomly turn on it's own)
+        var robotTurnInterval = _.random(2, 6); // randomly turn every 2-6 moves.
+        var blockFillColor = blockColor;
 
+        // Reset the snake so it can be used again for a new game.
         function reset() {
             direction = DEFAULT_DIRECTION;
             pendingDirection = DEFAULT_DIRECTION;
             var blockY = Math.trunc(getScreenGridDim().numRows / 2);
             var blockX = Math.trunc(getScreenGridDim().numCols / 2);
-            var blockColor = getBlockColor();
             blocks = _(INITIAL_SNAKE_LENGTH).times(function () {
-                return Block(blockX, blockY++, blockColor);
+                return Block(blockX, blockY++, blockFillColor);
             });
         }
 
-        function getBlockColor() {
-            return (robotMode && '#FF0000') || '#FFFF00';
-        }
-
-
+        // draw the snake
         function draw() {
             _.each(blocks, function (block) {
                 block.draw();
             });
         }
 
+        // change the direction of the snake. illegal turns will be ignored.
         function setDirection(newDirection) {
 
             // Maker sure it's a legal direction. Can't backup over yourself.
@@ -49,6 +47,7 @@ var Snake = function (robot) {
             }
         }
 
+        // is the block "too close" to the snake?
         function isTooClose(block, minSafeDistance) {
 
             minSafeDistance = minSafeDistance || 5;
@@ -69,6 +68,7 @@ var Snake = function (robot) {
             })
         }
 
+        // Advance the snake one cell forward
         function advance() {
             // put the end block at the start of the list with the coords
             //  of the next location.
@@ -87,7 +87,7 @@ var Snake = function (robot) {
             var newBlock;
             if (newBlockRequested) {
                 // when the snake eats the goal block it will get longer
-                newBlock = Block(0, 0, getBlockColor());
+                newBlock = Block(0, 0, blockFillColor);
                 newBlockRequested = false;
             } else {
                 // otherwise we'll move the tail to the new head location
@@ -120,12 +120,14 @@ var Snake = function (robot) {
             blocks.unshift(newBlock);
         }
 
+        // Is the snake head block on the perimeter of the game area.
         function isOnPerimeter() {
             var head = _.first(blocks);
             var dim = getScreenGridDim();
             return (head.x === 0 || head.y === 0 || head.x === dim.numCols - 1 || head.y === dim.numRows - 1);
         }
 
+        // Did the snake hit the game perimeter or itself?
         function collisionDetected() {
             var head = _.first(blocks);
 
@@ -143,21 +145,25 @@ var Snake = function (robot) {
             }
         }
 
+        // Did the snake eat a block?
         function ateBlock(block) {
             // did we eat the goal block?
             return _.first(blocks).samePosition(block);
         }
 
 
+        // Request a new block being added. It will be added during the next "advance"
         function addBlock() {
             newBlockRequested = true;
         }
 
+        // random allowable direction for the robot mode.
         function getRandomNewDirection() {
             var dirs = getAllowableDirections();
             return dirs[_.random(0, dirs.length - 1)];
         }
 
+        // Based on our current direction, what directions could we change to?
         function getAllowableDirections() {
 
             if (robotMode) {
@@ -183,8 +189,9 @@ var Snake = function (robot) {
             }
         }
 
+        // This function makes sure the robot snake does not go off the board. The allowable turns will be dependent
+        // on the current location of the snake.
         function getSnakeForceTurnDirections() {
-            // make sure our robot snake doesn't go off the board.
             var head = _.first(blocks);
 
             if (head.isAtTopLeft()) {
@@ -300,13 +307,12 @@ var Snake = function (robot) {
             intersects: intersects
         };
 
-// "extend" with the screen closure methods
+        // "extend" with the screen closure methods
         _.extend(snake.constructor.prototype, Screen.getInstance());
 
         return snake;
 
-    }
-    ;
+    };
 
 
 module.exports = Snake;

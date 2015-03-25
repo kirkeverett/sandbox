@@ -1,6 +1,6 @@
 
 // Main entry point of the game.
-(function() {
+SNAKEGAME = (function() {
     'use strict';
 
 if (!('jQuery' in window)) {
@@ -12,9 +12,6 @@ if (!('_' in window)) {
 }
 
 var SnakeGame = require('./snakegame');
-
-var game = SnakeGame();
-
-game.init();
+return SnakeGame();
 
 } ());

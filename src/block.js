@@ -1,6 +1,7 @@
 var Screen = require('./screen');
 
-// A block represents one cell of the game grid
+// A block represents one cell of the game grid. It can be drawn as a block or as a sprite image. A Block extends
+//  the Screen object for access to the drawing api.
 var Block = function (xPos, yPos, color) {
     'use strict';
 
@@ -10,9 +11,16 @@ var Block = function (xPos, yPos, color) {
         x: xPos,
         y: yPos,
         color:color,
+        spriteName:'',
 
         draw: function () {
-            this.drawCell(this.x, this.y, color);
+            if(this.spriteName) {
+              var dim = getScreenGridDim();
+              this.drawSprite(this.spriteName, this.x*dim.cellSize,this.y*dim.cellSize,
+                              dim.cellSize+5,dim.cellSize+5);
+            } else {
+               this.drawCell(this.x, this.y, color);
+            }
         },
         move: function (direction) {
 
