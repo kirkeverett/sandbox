@@ -7,7 +7,10 @@ var gulp = require('gulp'),
     browserSync = require('browser-sync'),
     connect = require('gulp-connect'),
     concat = require('gulp-concat'),
-    spritesmith = require("gulp.spritesmith");
+    spritesmith = require("gulp.spritesmith"),
+    karma = require('karma').server,
+    glob = require('glob'),
+    transform = require('vinyl-transform');
 
 gulp.task('clean', function () {
     del(['deploy/**']);
@@ -83,10 +86,27 @@ gulp.task('watch', ['build','serve'], function() {
     gulp.watch('css/*.css', ['css']);
     gulp.watch('media/*.wav', ['media']);
     gulp.watch('src/img/sprite/*.png', ['sprite']);
+    gulp.watch('test/**/*.js', ['tests']);
 });
 
-gulp.task('default', ['clean','build']);
+/**
+ * Run test once and exit
+ */
+gulp.task('test', function (done) {
+    karma.start({
+        configFile: __dirname + '/karma.conf.js',
+        singleRun: true
+    }, done);
+});
 
+/**
+ * Watch for file changes and re-run tests on each change
+ */
+gulp.task('tdd', function (done) {
+    karma.start({
+        configFile: __dirname + '/karma.conf.js'
+    }, done);
+});
 
 gulp.task('serveprod', ['build'], function() {
     connect.server({
@@ -95,3 +115,23 @@ gulp.task('serveprod', ['build'], function() {
         livereload: false
     });
 });
+
+gulp.task('tests', function() {
+
+
+    var testFiles = glob.sync('./test/**/*.js');  // Bundle all our tests.
+
+    browserify(testFiles).bundle()
+        .pipe(source('tests.js'))  // The bundle name.
+        .pipe(gulp.dest('./www/js'));  // The JS root path.
+
+/*
+    // build the infrastructure.js file (jquery, underscore, jasmine-jquery)
+    return gulp.src(['./node_modules/jquery/dist/jquery.min.js', './node_modules/underscore/underscore-min.js' ,'./node_modules/jasmine-jquery/lib/jasmine-jquery.js', './www/js/tests_temp.js'])
+        .pipe(concat('infrastructure.js'))
+        .pipe(gulp.dest('./www/js'))
+*/
+});
+
+
+gulp.task('default', ['clean','build']);

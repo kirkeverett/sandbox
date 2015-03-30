@@ -5,6 +5,7 @@
     -- Dynamically resizes the canvas and grid based on browser resize events
 */
 var BrowserDetect = require('./browserdetect');
+var CanvasContext = require('./CanvasContext');
 
 var Screen = (function () {
     'use strict';
@@ -18,7 +19,7 @@ var Screen = (function () {
         // TODO: These ids and paths should be externalized
         var gameArea = $('#gameArea');
         var statsArea = $('#statsArea');
-        var htmlCanvas = $('#gameCanvas').get(0);
+     //   var htmlCanvas = $('#gameCanvas').get(0);
         var spriteImgPath = './css/sprite.png';
         var fontFamily = "Sans-Serif";
         var textColor = '#473070';
@@ -34,6 +35,7 @@ var Screen = (function () {
 
         // canvas context
         var ctx;
+        var htmlCanvas;
         var spriteImg;
 
         // Map of the icon locations in the sprite image.
@@ -53,9 +55,10 @@ var Screen = (function () {
         }
 
 
-        function init() {
+        function initialize(htmlCanvasElm) {
 
-            ctx = htmlCanvas.getContext("2d");
+              ctx = CanvasContext(htmlCanvasElm);
+              htmlCanvas = htmlCanvasElm;
 
             // re-calc the grid dimensions if the window changes size.
             window.addEventListener('resize', resize, false);
@@ -147,14 +150,18 @@ var Screen = (function () {
             ctx.save();
 
             /// set font. Scale it if we need to for the device/browser
-            ctx.font = (fontSize * BrowserDetect.getInstance().getFontScale()) + "px " + fontFamily;
+         //   ctx.font = (fontSize * BrowserDetect.getInstance().getFontScale()) + "px " + fontFamily;
+            ctx.assign('font', (fontSize * BrowserDetect.getInstance().getFontScale()) + "px " + fontFamily);
 
             // x,y coords are the vert and horz centered midpoint of the text
-            ctx.textBaseline = 'middle';
-            ctx.textAlign = "center";
+         //   ctx.textBaseline = 'middle';
+            ctx.assign('textBaseline','middle');
+           // ctx.textAlign = "center";
+            ctx.assign('textAlign','center');
 
             /// text color
-            ctx.fillStyle = textColor;
+        //    ctx.fillStyle = textColor;
+            ctx.assign('fillStyle', textColor);
 
             /// draw text on top
             ctx.fillText(txt, x, y);
@@ -166,11 +173,13 @@ var Screen = (function () {
         // Draw a basic square block
         var drawCell = function (x, y, fillColor, borderColor) {
 
-            ctx.fillStyle = fillColor || '#FF0000';  // Red
+           // ctx.fillStyle = fillColor || '#FF0000';  // Red
+            ctx.assign('fillStyle', fillColor || '#FF0000');
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 
             ctx.beginPath(); //
-            ctx.fillStyle = borderColor || '#000000';
+          //  ctx.fillStyle = borderColor || '#000000';
+            ctx.assign('fillStyle', borderColor || '#000000');
             ctx.rect(x * cellSize, y * cellSize, cellSize, cellSize);
             ctx.stroke();
         }
@@ -183,7 +192,8 @@ var Screen = (function () {
 
             // draw a border around the game area
             ctx.beginPath(); //
-            ctx.fillStyle = "#000000";
+            // ctx.fillStyle = "#000000";
+            ctx.assign('fillStyle', '#000000');
             ctx.rect(0, 0, screenWidth, screenHeight);
             ctx.stroke();
         }
@@ -230,9 +240,10 @@ var Screen = (function () {
 
 
         // initialize the object
-        init();
+     //   init();
 
         return {
+            initialize: initialize,
             resize: resize,
             getScreenDimPixels: getScreenDimPixels,
             getScreenGridDim: getScreenGridDim,
